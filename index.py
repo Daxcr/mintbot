@@ -120,36 +120,34 @@ async def honeypot(ctx, enabled: bool):
             else:
                 await ctx.send("No honeypot found")
 
-@bot.command(name="init")
-async def init(ctx):
-    if ctx.author.id != OWNER_ID:
-        return
+@bot.command(name="unbandax") # Debug unban; not gonna be future-proofing any bans I swear 
+async def unbandax(ctx):
+    if ctx.author.id == OWNER_ID:
+        guild = bot.get_guild(1050249944889577602)
+        await guild.unban(ctx.author, reason="Auto-unban")
+        await ctx.send("https://discord.gg/cHqHFsj2e4")
 
+@bot.tree.command(name="appeal")
+async def appeal(interaction: discord.Interaction):
+    await interaction.response.defer()
     try:
         guild = bot.get_guild(1050249944889577602)
-        mod = guild.get_role(1343402463340003349)
+        ban_data = await guild.fetch_ban(interaction.user)
 
-        overwrites = {
-            guild.default_role: discord.PermissionOverwrite(view_channel=False),
-            ctx.author: discord.PermissionOverwrite(view_channel=True),
-            mod: discord.PermissionOverwrite(view_channel=True)
-        }
+        if ban_data.reason == "Honeypot":
+            await guild.unban(interaction.user, reason="Appeal via Honeybot")
+            await interaction.followup.send(f"Success!\nhttps://discord.gg/cHqHFsj2e4")
 
-        await guild.create_text_channel("honeybot-log", overwrites=overwrites)
-        await ctx.send("Log channel created")
     except Exception as e:
-        ctx.send(e)
-
+        await interaction.followup.send(f"Something went wrong: {e}", ephemeral=True)
 
 async def honeypotTrigger(member):
-    allowed_roles = {1330689950177296415, 1166572144289906820, 1166571624145887252, 1430854823263211603}
     if member.id != OWNER_ID:
-        if any(role.id in allowed_roles for role in member.roles):
-            return
+        return
     
     embed = discord.Embed(
         title="Banned",
-        description=f"""You have triggered the honeypot in `Mint Mutts`. If you are not a bot, please """,
+        description=f"You have triggered the honeypot in `Mint Mutts`. To get unbanned, please add this bot to your account and run `/appeal`.",
         colour=discord.Colour.red()
     )
     try:
@@ -158,8 +156,8 @@ async def honeypotTrigger(member):
     except:
         print("Honeypot trigger")
 
-    guild = bot.get_guild(1166564647336415314)
-    await guild.ban(member, reason="Honeypot Triggered", delete_message_days=0)
+    guild = bot.get_guild(1050249944889577602)
+    await guild.ban(member, reason="Honeypot", delete_message_days=0)
 
 @bot.event
 async def on_message(message):
@@ -168,7 +166,7 @@ async def on_message(message):
     
     if message.channel == honeypot:
         await message.delete()
-    #    await honeypotTrigger(message.author)
+        await honeypotTrigger(message.author)
         embed = discord.Embed(
             title="Honeypot Trigger",
             description=f"Triggered by: {message.author}\nContent: {message.content}",
