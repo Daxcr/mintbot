@@ -1,5 +1,4 @@
-version = "0.0.1"
-datamodel = "eye"
+version = "0.1.0"
 
 import discord
 from discord import app_commands
@@ -30,7 +29,7 @@ async def on_ready():
     await bot.tree.sync()
     print(f"{bot.user} has connected to Discord!")
 
-    game = discord.Activity(type=discord.ActivityType.playing, name=f"version: {version}_{datamodel}")
+    game = discord.Activity(type=discord.ActivityType.playing, name=f"version: {version}")
     await bot.change_presence(status=discord.Status.dnd, activity=game)
 
     user = await bot.fetch_user(OWNER_ID)
