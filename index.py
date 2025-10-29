@@ -46,7 +46,7 @@ async def collapse(ctx):
     if ctx.guild is None:
         return
     else:
-        if ctx.author.id != 858210985126920202:
+        if ctx.author.id != OWNER_ID:
             if not any(role.id in allowed_roles for role in ctx.author.roles):
                 return
 
