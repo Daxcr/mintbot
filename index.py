@@ -89,7 +89,7 @@ async def collapse(ctx):
             pass
 
 @bot.command(name="honeypot")
-async def warn(ctx, enabled: bool):
+async def honeypot(ctx, enabled: bool):
     allowed_roles = {1135558342488641638, 1343402463340003349}
     if ctx.author.id != OWNER_ID:
         if not any(role.id in allowed_roles for role in ctx.author.roles):
@@ -120,6 +120,27 @@ async def warn(ctx, enabled: bool):
             else:
                 await ctx.send("No honeypot found")
 
+@bot.command(name="init")
+async def init(ctx):
+    if ctx.author.id != OWNER_ID:
+        return
+
+    try:
+        guild = bot.get_guild(1050249944889577602)
+        mod = guild.get_role(1343402463340003349)
+
+        overwrites = {
+            guild.default_role: discord.PermissionOverwrite(view_channel=False),
+            ctx.author: discord.PermissionOverwrite(view_channel=True),
+            mod: discord.PermissionOverwrite(view_channel=True)
+        }
+
+        await guild.create_text_channel("honeybot-log", overwrites=overwrites)
+        await ctx.send("Log channel created")
+    except Exception as e:
+        ctx.send(e)
+
+
 async def honeypotTrigger(member):
     allowed_roles = {1330689950177296415, 1166572144289906820, 1166571624145887252, 1430854823263211603}
     if member.id != OWNER_ID:
@@ -127,10 +148,8 @@ async def honeypotTrigger(member):
             return
     
     embed = discord.Embed(
-        title="Whoops!",
-        description=f"""You have triggered the honeypot in `Mint Mutts`!
-        
-        You have been kicked :(""",
+        title="Banned",
+        description=f"""You have triggered the honeypot in `Mint Mutts`. If you are not a bot, please """,
         colour=discord.Colour.red()
     )
     try:
@@ -141,28 +160,23 @@ async def honeypotTrigger(member):
 
     guild = bot.get_guild(1166564647336415314)
     await guild.ban(member, reason="Honeypot Triggered", delete_message_days=0)
-    
-    if os.path.exists("softbans.json"):
-        with open("softbans.json", "r") as file:
-            softbans = json.load(file)
-    else:
-        softbans = {}
-
-    epoch = datetime(2000, 1, 1)
-    seconds_since_2000 = int((datetime.now() - epoch).total_seconds())
-    softbans[member.id] = seconds_since_2000
-
-    with open("softbans.json", "w") as file:
-        json.dump(softbans, file, indent=4)
 
 @bot.event
 async def on_message(message):
     if message.author == bot.user:
         return
     
-    #if message.channel == honeypot:
-    #    await message.delete()
+    if message.channel == honeypot:
+        await message.delete()
     #    await honeypotTrigger(message.author)
+        embed = discord.Embed(
+            title="Honeypot Trigger",
+            description=f"Triggered by: {message.author}\nContent: {message.content}",
+            colour=discord.Colour.red()
+        )
+        guild = bot.get_guild(1050249944889577602)
+        channel = discord.utils.get(guild.channels, name="honeybot-log")
+        await channel.send(embed=embed)
 
     await bot.process_commands(message)
 
