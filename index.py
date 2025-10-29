@@ -106,7 +106,7 @@ async def honeypot(ctx, enabled: bool):
 
                 embed = discord.Embed(
                     title="Do not post here!",
-                    description=f"This is a honeypot used to catch bots. If you post here, you will be immediately kicked, no exceptions. We recommend you remove this channel from your channel list and ignore it.\n\n**Honeypot initiated by:** {ctx.author.mention}",
+                    description=f"This is a honeypot used to catch automated spam accounts. If you post here, you will get banned. You can appeal, but please don't test it. We recommend you remove this channel from your channel list and ignore it.\n\n**Honeypot initiated by:** {ctx.author.mention}",
                     colour=discord.Colour.red()
                 )
                 await honeypot.send(embed=embed)
@@ -142,11 +142,8 @@ async def appeal(interaction: discord.Interaction):
         await interaction.followup.send(f"Something went wrong: {e}", ephemeral=True)
 
 async def honeypotTrigger(member):
-    if member.id != OWNER_ID:
-        return
-    
     embed = discord.Embed(
-        title="Banned",
+        title="Banned :(",
         description=f"You have triggered the honeypot in `Mint Mutts`. To get unbanned, please add this bot to your account and run `/appeal`.",
         colour=discord.Colour.red()
     )
@@ -177,6 +174,18 @@ async def on_message(message):
         await channel.send(embed=embed)
 
     await bot.process_commands(message)
+
+@bot.event
+async def on_member_join(member: discord.Member):
+    if member.id != OWNER_ID:
+        return
+
+    guild = member.guild
+    channel = discord.utils.get(guild.channels, name="honeybot-log")
+
+    overwrite = channel.overwrites_for(member)
+    overwrite.view_channel = True
+    await channel.set_permissions(member, overwrite=overwrite)
 
 token = os.getenv("DISCORD_TOKEN")
 
