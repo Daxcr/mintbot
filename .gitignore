@@ -1,0 +1,4 @@
+bin/
+obj/
+.env/
+honeypot.txt
