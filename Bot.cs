@@ -53,7 +53,7 @@ public class BotClient
 
                 await Log($"{message.Author.Username} triggered the honeypot.", Color.Red);
 
-                await guildUser2.BanAsync(pruneDays: 0, reason: "Honeypot");
+                await guildUser2.BanAsync(pruneDays: 1, reason: "Honeypot");
                 await guild.RemoveBanAsync(userId);
             }
 
